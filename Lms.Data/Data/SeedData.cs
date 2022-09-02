@@ -1,4 +1,5 @@
-﻿using Lms.Core.Entities;
+﻿using Bogus;
+using Lms.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,10 @@ namespace Lms.Data.Data
 {
     public class SeedData
     {
-        private static LmsAPIContext db = default!;
+        public static LmsAPIContext db = default!;
+        private static IEnumerable<Module> modules;
+        private static IEnumerable<Course> courses;
+
         public static async Task InitAsync(LmsAPIContext context, IServiceProvider services)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -19,21 +23,49 @@ namespace Lms.Data.Data
 
             if (db.Course.Any()) return;
 
-            var courses = GetCourses();
+            modules = GetModules();
+            courses = GetCourses();
             await db.AddRangeAsync(courses);
 
-            var modules = GetModules();
-            await db.AddRangeAsync(modules);
+            ////await db.AddRangeAsync(modules);
+
+            await db.SaveChangesAsync();
         }
 
-        private static IEnumerable<Course> GetCourses()
+        public static IEnumerable<Module> GetModules()
         {
-            throw new NotImplementedException();
-        }
+            var faker = new Faker("sv");
+            var modules = new List<Module>();
+            Random rnd = new Random();
 
-        private static IEnumerable<Module> GetModules()
+            for (int i = 0; i < 50; i++)
+            {
+                var temp = new Module
+                {
+                    Title = faker.Finance.AccountName(),
+                    StartDate = DateTime.Now.AddDays(faker.Random.Int(-10, 15))
+                };
+                modules.Add(temp);
+            }
+            return modules;
+        }
+        public static IEnumerable<Course> GetCourses()
         {
-            throw new NotImplementedException();
+            var faker = new Faker("sv");
+            var courses = new List<Course>();
+            Random rnd = new Random();
+
+            for (int i = 0; i < 30; i++)
+            {
+                var temp = new Course
+                {
+                    Title = faker.Commerce.ProductName(),
+                    StartDate = DateTime.Now.AddDays(faker.Random.Int(-10, 15)),
+                    Modules = modules.OrderBy(x => rnd.Next()).Take(5).ToList()
+                };
+                courses.Add(temp);
+            }
+            return courses;
         }
     }
 }

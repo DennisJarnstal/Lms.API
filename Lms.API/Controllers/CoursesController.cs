@@ -29,7 +29,8 @@ namespace Lms.API.Controllers
           {
               return NotFound();
           }
-            return await _context.Course.ToListAsync();
+            var courses = await _context.Course.Include(c => c.Modules).ToListAsync();
+            return Ok(courses);
         }
 
         // GET: api/Courses/5
